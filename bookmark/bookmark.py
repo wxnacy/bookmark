@@ -13,6 +13,14 @@ __all__ = ['add_bookmark', 'list_bookmarks',
 
 BM_DB_PATH = os.path.expanduser('~/.bookmark')
 
+class BookmarkException(Exception):
+    """Bookmark base Exception"""
+    pass
+
+class BookmarkExistsException(BookmarkException):
+    """书签已经存在的异常"""
+    pass
+
 
 class Bookmark(object):
 
@@ -38,6 +46,9 @@ class Bookmark(object):
 
 
 def add_bookmark(text, tags=None):
+    bm = _search_text(text)
+    if bm:
+        raise BookmarkExistsException(f"Bookmark '{text}' exists!")
     _add_bookmark(text, tags)
 
 def _add_bookmark(text, tags=None):
@@ -46,6 +57,12 @@ def _add_bookmark(text, tags=None):
     with open(BM_DB_PATH, 'a') as f:
         f.write(bm.to_json())
         f.write('\n')
+
+def _search_text(text):
+    for bm in _list_bookmark():
+        if bm.text == text:
+            return bm
+    return None
 
 def list_bookmarks(tags=None):
     return _list_bookmark(tags)
@@ -73,10 +90,10 @@ def _list_bookmark(tags=None):
     return bookmarks
 
 
-def delete_bookmark(text):
-    _delete_bookmark(text)
+def delete_bookmark(text, tags=None):
+    return _delete_bookmark(text, tags)
 
-def _delete_bookmark(text):
+def _delete_bookmark(text, tags=None):
     """删除书签"""
     with open(BM_DB_PATH, 'r') as f:
         lines = f.readlines()
@@ -94,4 +111,14 @@ def _delete_bookmark(text):
     with open(BM_DB_PATH, 'w') as f:
         f.write('\n'.join(new_lines))
     return count
+
+#  def _str_bm_name(text, tags):
+    #  if not tags:
+        #  return text
+    #  return f"{text} tags:{_str_tags(tags)}"
+
+#  def _str_tags(tags):
+    #  if isinstance(tags, list):
+        #  return ','.join(tags)
+    #  return ''
 

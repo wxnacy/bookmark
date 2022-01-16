@@ -9,6 +9,7 @@ import argparse
 from .bookmark import add_bookmark
 from .bookmark import list_bookmarks
 from .bookmark import delete_bookmark
+from .bookmark import BookmarkException
 
 def init_argparse():
     parser = argparse.ArgumentParser()
@@ -18,9 +19,14 @@ def init_argparse():
     return parser
 
 def add(arg):
-    add_bookmark(arg.text, arg.tags)
-    print(f'Created bookmark {arg.text}')
-    return
+    try:
+        add_bookmark(arg.text, arg.tags)
+    except BookmarkException as e:
+        print(str(e))
+    except Exception as e:
+        raise e
+    else:
+        print(f'Created bookmark \'{arg.text}\'')
 
 def ls(arg):
     bookmarks = list_bookmarks(arg.tags) or []
@@ -34,7 +40,7 @@ def list(arg):
 
 def delete(arg):
     count = delete_bookmark(arg.text)
-    print(f'Delete {arg.text}')
+    print(f'Delete {arg.text} count {count}')
 
 def main():
     import sys
