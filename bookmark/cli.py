@@ -6,19 +6,33 @@
 """
 
 import argparse
-from .bookmark import add_bookmark
-from .bookmark import list_bookmarks
-from .bookmark import delete_bookmark
-from .bookmark import BookmarkException
 
-def init_argparse():
-    parser = argparse.ArgumentParser()
+from .bookmark import (
+    add_bookmark,
+    list_bookmarks,
+    delete_bookmark,
+    BookmarkException
+)
+
+USAGE = """bm [--tags TAGS [TAGS ...]] [-h]
+          [cmd] [text]
+
+bm add https://github.com/wxnacy/bookmark --tags github --tags bookmark
+bm list
+bm delete https://github.com/wxnacy/bookmark
+"""
+
+def init_argparse() -> argparse.ArgumentParser:
+    """初始化命令参数"""
+    parser = argparse.ArgumentParser(add_help = False, usage = USAGE)
     parser.add_argument('cmd', nargs='?')
     parser.add_argument('text', nargs='?', default='')
     parser.add_argument('--tags', nargs='+')
+    parser.add_argument('-h', '--help', action='help',
+        default=argparse.SUPPRESS, help='Show this help message and exit.')
     return parser
 
-def add(arg):
+def add(arg: argparse.Namespace):
     try:
         add_bookmark(arg.text, arg.tags)
     except BookmarkException as e:
@@ -28,17 +42,17 @@ def add(arg):
     else:
         print(f'Created bookmark \'{arg.text}\'')
 
-def ls(arg):
+def ls(arg: argparse.Namespace):
     bookmarks = list_bookmarks(arg.tags) or []
     for bm in bookmarks:
         print(bm.text)
 
-def list(arg):
+def list(arg: argparse.Namespace):
     bookmarks = list_bookmarks(arg.tags) or []
     for bm in bookmarks:
         print(bm.text, ','.join(bm.tags))
 
-def delete(arg):
+def delete(arg: argparse.Namespace):
     count = delete_bookmark(arg.text)
     print(f'Delete {arg.text} count {count}')
 
@@ -46,6 +60,7 @@ def main():
     import sys
     parser = init_argparse()
     arg = parser.parse_args()
+    #  print(arg.help)
 
     cmd = arg.cmd
     if not cmd:

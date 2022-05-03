@@ -7,6 +7,9 @@
 
 import os
 import json
+from typing import (
+    List
+)
 
 __all__ = ['add_bookmark', 'list_bookmarks',
     'delete_bookmark']
@@ -23,12 +26,12 @@ class BookmarkExistsException(BookmarkException):
 
 
 class Bookmark(object):
-
     """书签类"""
+    text: str
+    tags: list = None
 
-    def __init__(self, text, tags=None):
-        """TODO: to be defined.
-
+    def __init__(self, text: str, tags: list = None):
+        """
         :text: 书签内容
         :tags: 标签
 
@@ -38,36 +41,40 @@ class Bookmark(object):
             tags = []
         self.tags = tags
 
-    def to_dict(self):
-        return json.loads(self.to_json())
+    def dict(self) -> dict:
+        data = {}
+        for key in self.__annotations__.keys():
+            data[key] = getattr(self, key)
+        return data
 
-    def to_json(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+    def json(self) -> str:
+        return json.dumps(self, default = lambda o: o.dict(), sort_keys = True)
 
 
-def add_bookmark(text, tags=None):
+def add_bookmark(text: str, tags=None):
     bm = _search_text(text)
     if bm:
         raise BookmarkExistsException(f"Bookmark '{text}' exists!")
     _add_bookmark(text, tags)
 
-def _add_bookmark(text, tags=None):
+def _add_bookmark(text: str, tags: list=None):
     """添加书签"""
     bm = Bookmark(text, tags)
     with open(BM_DB_PATH, 'a') as f:
-        f.write(bm.to_json())
+        f.write(bm.json())
         f.write('\n')
 
-def _search_text(text):
+def _search_text(text: str) -> Bookmark:
+    """搜索本文是否已经存在"""
     for bm in _list_bookmark():
         if bm.text == text:
             return bm
     return None
 
-def list_bookmarks(tags=None):
+def list_bookmarks(tags: list = None) -> List[Bookmark]:
     return _list_bookmark(tags)
 
-def _list_bookmark(tags=None):
+def _list_bookmark(tags: list=None) -> List[Bookmark]:
     """添加书签"""
     if not tags:
         tags = []
@@ -90,10 +97,10 @@ def _list_bookmark(tags=None):
     return bookmarks
 
 
-def delete_bookmark(text, tags=None):
+def delete_bookmark(text: str, tags: list=None) -> int:
     return _delete_bookmark(text, tags)
 
-def _delete_bookmark(text, tags=None):
+def _delete_bookmark(text: str, tags: list = None) -> int:
     """删除书签"""
     with open(BM_DB_PATH, 'r') as f:
         lines = f.readlines()
@@ -111,14 +118,4 @@ def _delete_bookmark(text, tags=None):
     with open(BM_DB_PATH, 'w') as f:
         f.write('\n'.join(new_lines))
     return count
-
-#  def _str_bm_name(text, tags):
-    #  if not tags:
-        #  return text
-    #  return f"{text} tags:{_str_tags(tags)}"
-
-#  def _str_tags(tags):
-    #  if isinstance(tags, list):
-        #  return ','.join(tags)
-    #  return ''
 
